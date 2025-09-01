@@ -12,7 +12,7 @@ library(cluster)
 
 
 ```{r}
-adele_songs <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv", header = TRUE)
+adele_songs <- read.csv("adelesongs.csv", header = TRUE)
 head(adele_songs)
 ```
 
@@ -44,7 +44,7 @@ songs.dtm = DocumentTermMatrix(adele_songs1,
                                bounds = list(global = c(minTermFreq, maxTermFreq))
                              ))
 write.csv(as.matrix(songs.dtm),"songs_dtm.csv")
-songs_dtm <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/songs_dtm.csv", header = TRUE)
+songs_dtm <- read.csv("songs_dtm.csv", header = TRUE)
 View(songs_dtm)
 ```
 
@@ -89,7 +89,7 @@ write.csv(kfit$cluster, "final_cluster.csv")
 
 #shows the song and the cluster that it has been group into 
 #there are 5 clusters in total 
-final_cluster <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/final_cluster.csv", header = TRUE)
+final_cluster <- read.csv("final_cluster.csv", header = TRUE)
 View(final_cluster)
 
 ```

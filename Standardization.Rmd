@@ -1,5 +1,4 @@
 ---
-title: 'CIS468 Group Project '
 output:
   pdf_document: default
   html_document: default
@@ -19,10 +18,7 @@ library(tidyverse)
 #Importing the dataset 
 
 #loading on home computer
-Life_Expectancy_Data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/Life_Expectancy_Data.csv", stringsAsFactors = TRUE)
-
-#processing in lab
-#adult_Survey <- read.csv( "C:/Users/snjoya2/Downloads/adult.csv", stringsAsFactors = TRUE)
+Life_Expectancy_Data <- read.csv("Life_Expectancy_Data.csv", stringsAsFactors = TRUE)
 
 
 unique(Life_Expectancy_Data$Country)
@@ -247,7 +243,7 @@ LE_Data <- LE_Data[complete.cases(LE_Data),]
 
 
 #writing the cleaned data set into a new csv
-path <- "/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/LEData.csv"
+path <- "LEData.csv"
 write.csv(LE_Data, path, row.names = FALSE)
 View(LE_Data)
 

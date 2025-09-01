@@ -1,5 +1,4 @@
 ---
-title: "Assignment 3"
 output: pdf_document
 date: "2025-03-30"
 ---
@@ -15,7 +14,7 @@ library(lattice)
 ```{r}
 #importing the datasert 
 
-airline <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/Airlines.csv",
+airline <- read.csv("Airlines.csv",
                     stringsAsFactors = TRUE)
 head(airline)
 

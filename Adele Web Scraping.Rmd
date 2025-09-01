@@ -86,7 +86,7 @@ adele_songs <- bind_rows(lapply(adele_list, scrape_songs))
 View(adele_songs)
 
 getwd()
-path <- "/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv"
+path <- "adelesongs.csv"
 write.csv(adele_songs, path, row.names = FALSE)
 ```
 

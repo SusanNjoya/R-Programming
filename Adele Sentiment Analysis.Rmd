@@ -20,7 +20,7 @@ library(RColorBrewer)
 
 ```{r}
 #1. Reading the data
-adele_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv", stringsAsFactors = TRUE)
+adele_data <- read.csv("adelesongs.csv", stringsAsFactors = TRUE)
 ```
 
 ```{r}
@@ -123,7 +123,7 @@ adele_data3 %>%
 
 ```{r}
 #plotting per album = 19
-adele_songs <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adeledata.csv", stringsAsFactors = TRUE, header = TRUE)
+adele_songs <- read.csv("adeledata.csv", stringsAsFactors = TRUE, header = TRUE)
 str(adele_songs)
 
 album_19 <- adele_songs %>% filter(Album == 19)

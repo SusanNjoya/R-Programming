@@ -1,0 +1,122 @@
+---
+title: "Adele Bigrams and Tokenization"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+```{r}
+#Libraries 
+library(readr)
+library(dplyr)
+library(tidytext)
+library(ggplot2)
+library(tidyr)
+#install.packages("igraph")
+library(igraph)
+#installed.packages("pacman")
+#pacman::p_load(ggraph)
+library(ggraph)
+```
+
+
+```{r}
+#Importing the dataset 
+adele_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv", stringsAsFactors = TRUE, header = TRUE)
+
+head(adele_data)
+```
+```{r}
+#Selecting only the lyrics variables 
+adele_subset <- adele_data %>%
+  select(Lyrics)
+#converting lyrics to characters instead of factors 
+adele_subset <- adele_subset %>%
+  mutate(Lyrics = as.character(Lyrics))
+```
+
+```{r}
+#unnesting tokens and displaying the top 20 words after removing stop words 
+
+#unnest_tokens
+adele_tokens <- unnest_tokens(adele_subset, word, Lyrics)
+
+adele_tokens
+
+#removing stop words
+data("stop_words")    
+head(stop_words)
+adele_no_stopwords<-adele_tokens %>% anti_join(stop_words, by="word")
+
+#words count of data set after removing stop words
+countAdele_no_stopwords <- adele_no_stopwords %>% count(word, sort=TRUE) 
+
+
+##top 20 words
+top20words <- countAdele_no_stopwords %>%
+  slice_max(n, n = 20)
+  #top 20 words as a data frame
+top20words
+
+#visualizing top 20 words
+library(ggplot2)
+countAdele_no_stopwords %>% slice_max(n, n = 20) %>% ggplot(aes(x=word,y=n)) + geom_col()
+```
+
+```{r}
+#Plotting stop words and filtering by number
+
+#visualizing stop words with frequency over 50
+countAdele_no_stopwords %>% filter(n > 50) %>% ggplot(aes(x=word,y=n)) + geom_col()
+```
+
+```{r}
+#Bigrams
+
+#unnest_tokens
+bigram <- adele_subset %>%
+  unnest_tokens(bigram, Lyrics, token = "ngrams", n=2)
+
+bigram1 <- bigram %>% 
+  separate(bigram, c("term1", "term2"), sep = " ")
+bigram1
+
+bigram_no_stop_words <- bigram1 %>%
+  filter(!term1 %in% stop_words$word) %>%
+  filter(!term2 %in% stop_words$word) 
+bigram_no_stop_words
+
+bigram_count <- bigram_no_stop_words %>%
+  count(term1, term2, sort = TRUE)
+bigram_count
+
+bigram_New <- bigram_no_stop_words %>%
+  unite(bigram, term1, term2, sep= " ")
+bigram_New
+
+
+
+```
+
+```{r}
+#plotting the bigram 
+
+bigram_count 
+class(bigram_count)
+
+bigram_New1 <- bigram_count %>%
+  unite(bigram, term1, term2, sep= " ")
+bigram_New1
+
+
+g <- filter(bigram_New1, n>3) %>%  graph_from_data_frame()   
+g
+V(g)  
+g
+class(g)  
+plot(g)   
+
+set.seed(2017)
+ggraph(g, layout="fr") + geom_edge_link() + geom_node_point() + geom_node_text(aes(label=name), vjust=0.1, hjust=0.5)
+
+```
+

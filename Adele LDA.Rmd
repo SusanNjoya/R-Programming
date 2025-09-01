@@ -1,0 +1,105 @@
+---
+title: "Adele LDA"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r}
+#Libraries 
+library(topicmodels)
+library(tidytext)
+library(tm)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(gutenbergr)
+```
+
+```{r}
+#Importing the dataset 
+adele_songs <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adeledata.csv", stringsAsFactors = TRUE, header = TRUE)
+
+head(adele_songs)
+
+```
+
+```{r}
+#conversion into a corpus
+adele_songs1 <- Corpus(VectorSource(adele_songs$Lyrics))
+
+#since there are 71 songs originally in the lyrics part of the dataset
+#in the corpus there should be 71 documents
+nSongs <- length(adele_songs1)
+nSongs
+
+minTermFreq <- nSongs * 0.01
+maxTermFreq <- nSongs * .5
+
+#cleaning the text data and converting it to a DTM
+songs.dtm = DocumentTermMatrix(adele_songs1,
+                             control = list(
+                               stopwords = TRUE, 
+                               #limits the terms to words that have a min of 4 
+                               #letters and a max of 15 letters
+                               wordLengths=c(4, 15),
+                               removePunctuation = T,
+                               removeNumbers = T,
+                               bounds = list(global = c(minTermFreq, maxTermFreq))
+                             ))
+
+ap_lda <- LDA(songs.dtm, k = 2, control = list(seed = 1234))
+ap_lda
+ 
+
+ap_topics <- tidy(ap_lda, matrix = "beta")
+ap_topics
+```
+
+```{r}
+#visualization
+
+# Sorting the terms by beta score, selecting the top 10
+ap_top_terms <- ap_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%     
+  ungroup() %>%
+  arrange(topic, -beta)
+# Displaying the top 10 terms per topic
+ap_top_terms %>%
+  mutate(term = reorder_within(term, beta, topic)) %>%
+  ggplot(aes(beta, term, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  scale_y_reordered()
+
+
+beta_spread <-ap_topics %>% 
+  mutate(topic = paste0("topic", topic)) %>% 
+  spread(topic, beta) %>%
+  filter(topic1 > .001 | topic2 > .001) %>%
+  mutate(log_ratio = log2(topic2 / topic1)) 
+ 
+  
+ beta_spread %>%
+  group_by(direction = log_ratio > 0) %>%
+  slice_max(abs(log_ratio), n = 10) %>% 
+  ungroup() %>%
+  mutate(term = reorder(term, log_ratio)) %>%
+  ggplot(aes(log_ratio, term)) +
+  geom_col() +
+  labs(x = "Difference of beta in topics in Adele Discography", y = NULL)
+```
+
+```{r}
+ap_doc_topic <- tidy(ap_lda, matrix = "gamma")
+ap_doc_topic
+```
+```{r}
+# display the most common terms 
+tidy(songs.dtm) %>%
+  filter(document == 6) %>%
+  arrange(desc(count))
+```
+
+

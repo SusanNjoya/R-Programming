@@ -1,0 +1,133 @@
+---
+title: "Assignment 3"
+output: pdf_document
+date: "2025-03-30"
+---
+
+```{r}
+#Libraries 
+library(caret)
+library(ggplot2)
+library(lattice)
+```
+
+
+```{r}
+#importing the datasert 
+
+airline <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/Airlines.csv",
+                    stringsAsFactors = TRUE)
+head(airline)
+
+##once I began cross validation I realized my dataset was too large 
+mem.maxVSize(airline)
+#using "mem.maxVSize" i determine to shorted the set based on how much memory
+  # a vector could hold 
+
+#ran another test and the model took very long to run so i decided to go 
+  #shortened the set to 100,000(naive bayes), then 1,000 for the other models observations
+
+#randomly selecting number of desiredobservations to analyze
+set.seed(123)
+airline <- airline[sample(nrow(airline), 1000), ]
+
+```
+
+```{r}
+#K-Nearest Neighbor
+#Naïve Bayes
+#Decision Tree
+```
+
+```{r}
+airline$Flight <- as.factor(airline$Flight)
+airline$DayOfWeek <- as.factor(airline$DayOfWeek)
+#delay is the factor that will act as the class varibale as that is what I
+  #intend on predicting
+airline$Delay <- as.factor(airline$Delay)
+summary(airline)
+str(airline)
+```
+
+```{r}
+#Naïve Bayes
+
+#removing NA values
+airline <- airline[complete.cases(airline),]
+
+#Removing the ID attribute
+airline <- airline[,c(-1)]
+
+
+#80/20 split
+trainIndex <- createDataPartition(airline$Delay, p=.8, list=FALSE, times = 1)
+airline_train <- airline[trainIndex,]
+airline_test <- airline[-trainIndex,]
+airline_test <- airline_test[(c(1,5,6,8))]
+airline_train <- airline_train[(c(1,5,6,8))]
+
+prop.table(table(airline_train$Delay)) * 100
+prop.table(table(airline_test$Delay)) * 100
+
+#Summary of training and test sets 
+summary(airline_train)
+summary(airline_test)
+
+#Cross Validation
+
+ctrl <- trainControl(method="cv")
+nbFit <- train(Delay ~ ., data = airline_train, method = "nb", trControl = ctrl, preProcess = "scale")
+nbFit
+
+nbPredict <- predict(nbFit, newdata = airline_test)
+nbPredict
+
+confusionMatrix(nbPredict, airline_test$Delay, mode="everything")
+
+varImp(nbFit,scale=FALSE)
+
+ctrl <- trainControl(method="cv")
+ctrl
+
+table(airline_train$Delay)
+table(airline_test$Delay)
+```
+
+```{r}
+#k-nearest neighbor 
+
+ctrl_boot <- trainControl(method="boot632")
+knnFit_boot <- train(Delay ~ ., data = airline_train, method = "knn", trControl = ctrl_boot, preProcess = "scale")
+knnFit_boot
+
+plot(knnFit_boot)
+
+knnPredict_boot <- predict(knnFit_boot, newdata = airline_test)
+knnPredict_boot
+
+confusionMatrix(knnPredict_boot, airline_test$Delay, mode="everything")
+
+```
+
+```{r}
+#Decision Tree
+
+ctrl <- trainControl(method="cv")
+treeFit <- train(Delay ~ ., data = airline_train, method = "rpart", trControl = ctrl)
+treeFit
+summary(treeFit$finalModel)
+
+varImp(treeFit,scale=FALSE)
+
+plot(treeFit$finalModel, uniform=TRUE)
+text(treeFit$finalModel, all=TRUE, cex=.8)
+
+library(rpart.plot)
+rpart.plot(treeFit$finalModel)
+
+treePredict <- predict(treeFit, newdata = airline_test)
+treePredict
+
+confusionMatrix(treePredict, airline_test$Delay, mode="everything")
+```
+

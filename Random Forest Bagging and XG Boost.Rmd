@@ -1,0 +1,111 @@
+---
+title: "Njoya Susan Assignment 4"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+#Installing Packages 
+library(readr)
+library(caret)
+library(randomForest)
+library(xgboost)
+```
+
+```{r}
+#Importing the dataset 
+
+#loading on home computer
+adult_Survey <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/adult.csv", stringsAsFactors = TRUE)
+
+#processing in lab
+#adult_Survey <- read.csv( "C:/Users/snjoya2/Downloads/adult.csv", stringsAsFactors = TRUE)
+
+summary(adult_Survey)
+str(adult_Survey)
+```
+
+```{r}
+#cleaning the data set 
+
+#removing all rows with "?" input value
+adult_Survey <- adult_Survey[!(adult_Survey$workclass %in% "?"),]
+adult_Survey <- adult_Survey[!(adult_Survey$native.country %in% "?"),]
+adult_Survey <- adult_Survey[!(adult_Survey$occupation %in% "?"),]
+adult_Survey <- adult_Survey[!(adult_Survey$workclass %in% "Never-worked"),]
+adult_Survey <- adult_Survey[!(adult_Survey$native.country %in% "Holand-Netherlands"),]
+
+#while processing the random forest model I encountered this warning
+##Warning: These variables have zero variances: workclassNever-worked, 
+#native.countryHoland-Netherlands
+#although random forest will ignore them they've been removed for faster processing
+
+  #removing those categories all together
+adult_Survey$workclass <- droplevels(adult_Survey$workclass)
+adult_Survey$occupation <- droplevels(adult_Survey$occupation)
+adult_Survey$native.country <- droplevels(adult_Survey$native.country)
+
+summary(adult_Survey)
+str(adult_Survey)
+
+```
+
+```{r}
+#Partitioning the data set by using a 70/30 split 
+set.seed(4567)
+#predicting the income variable 
+trainIndex <- createDataPartition(adult_Survey$income, p=.7, list=FALSE, times = 1)
+survey_train <- adult_Survey[trainIndex,]
+survey_test <- adult_Survey[-trainIndex,]
+#this partition will be used for all three models
+
+```
+
+```{r}
+#Random Forest 
+
+trControl <- trainControl(method = 'none')
+
+rfFit <- train(income ~ ., data = survey_train, method = 'rf', preProcess = c("center","scale"), trControl = trControl)
+
+rfPredClass <- predict(rfFit,survey_test)
+
+confusionMatrix(rfPredClass, survey_test$income, mode="everything")
+
+significant_var <- varImp(rfFit)
+significant_var
+
+plot(significant_var, top = 10)
+```
+
+```{r}
+#bagging
+trControl1 <- trainControl(method = 'none')
+
+bagFit <- train(income ~ ., data = survey_train, method = 'treebag', preProcess = c("center","scale"), trControl1 = trControl1)
+
+bagPredClass <- predict(bagFit,survey_test)
+
+confusionMatrix(bagPredClass, survey_test$income, mode="everything")
+
+significant_var1 <- varImp(bagFit)
+significant_var1
+
+plot(significant_var1, top = 10)
+```
+
+```{r}
+#XG Boost 
+boostFit <- train(income ~ ., data = survey_train, method = 'xgbTree', preProcess = c("center","scale"))
+
+boostPredClass <- predict(boostFit,survey_test)
+
+confusionMatrix(boostPredClass, survey_test$income, mode="everything")
+
+significant_var2 <- varImp(boostFit)
+significant_var2
+
+plot(significant_var2, top = 10)
+```
+

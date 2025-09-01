@@ -1,0 +1,363 @@
+---
+title: "Adele Sentiment Analysis"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r}
+#libraries 
+library(stopwords)
+library(dplyr)
+library(tidytext)
+library(textdata)  
+library(tm)
+library(tidyr)
+library(ggplot2)
+library(wordcloud)
+library(RColorBrewer)
+```
+
+```{r}
+#1. Reading the data
+adele_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv", stringsAsFactors = TRUE)
+```
+
+```{r}
+#2. Describing the data
+
+str(adele_data)
+#There are 71 observations with 4 variables(Title, Lyrics, Writer, URl)
+
+#album 19 has the most songs 
+#album 21 and 30 have the same amount of songs
+#album 25 has the 3rd most amount of songs 
+#album single has the least amount of songs 
+
+```
+
+```{r}
+#converting the data into a corpus,so each comment will be a document
+adele_data1 <- Corpus(VectorSource(adele_data$Lyrics))
+
+#removing stop words
+adele_data1 <- tm_map(adele_data1, removeWords, stopwords("en"))
+
+#removing punctuation
+adele_data1 <- tm_map(adele_data1, removePunctuation)
+
+#converting to lowercase
+adele_data1 <- tm_map(adele_data1, content_transformer(tolower))
+
+#removing white space
+adele_data1 <- tm_map(adele_data1, stripWhitespace)
+
+#converting the corpus back to a data fram after cleaning
+adele_data2 <- data.frame(comment = sapply(adele_data1, as.character), stringsAsFactors = FALSE)
+
+adele_data3 <- adele_data2 %>%
+  unnest_tokens(word, comment)
+```
+
+```{r}
+#4. Loading sentiment lexicons
+sentiments
+
+bing <- get_sentiments("bing")
+
+head(bing)
+
+# positive and negative in bing
+
+#positive
+positive_sentiment_words_bing <- bing %>%
+  filter(sentiment == "positive") %>%
+  slice_head(n=10)
+positive_sentiment_words_bing
+#negative
+negative_sentiment_words_bing <- bing %>%
+  filter(sentiment == "negative") %>%
+  slice_head(n=10)
+negative_sentiment_words_bing
+
+```
+
+
+```{r}
+adele_sentiment <-adele_data3 %>%  
+  inner_join(bing, by="word") %>% 
+    count(index = row_number() %/% 100, sentiment) %>% 
+      pivot_wider(names_from = sentiment, values_from = n, values_fill=0) %>%    
+        mutate(sentiment = positive - negative)
+
+adele_sentiment
+
+#visualizong the sentiment distribution
+ggplot(adele_sentiment, aes(x=index, y=sentiment, fill="adele_songs")) + 
+  geom_col(show.legend = FALSE) +
+    facet_wrap(~'adele_songs', ncol=2, scales= 'free_x') +
+      labs(title = "Sentiment Plot for Bing Lexicon", x="Index per 100 words", y="Sentiment Score")
+```
+
+```{r}
+#Word Clouds
+
+#neagtive words
+adele_data3 %>%
+  inner_join(bing, by = "word") %>%
+  filter(sentiment == "negative") %>%
+  anti_join(stop_words, by = "word") %>%
+  count(word, sort = TRUE) %>%
+  with(wordcloud(word, n, max.words = 20, scale = c(5,2)))
+
+#postive words
+adele_data3 %>%
+  inner_join(bing, by = "word") %>%
+  filter(sentiment == "positive") %>%
+  anti_join(stop_words, by = "word") %>%
+  count(word, sort = TRUE) %>%
+  with(wordcloud(word, n, max.words = 20, scale = c(5,2)))
+```
+
+
+
+```{r}
+#plotting per album = 19
+adele_songs <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adeledata.csv", stringsAsFactors = TRUE, header = TRUE)
+str(adele_songs)
+
+album_19 <- adele_songs %>% filter(Album == 19)
+View(album_19)
+
+
+album_19$Album <- as.character(album_19$Album)
+album_19$Lyrics <- as.character(album_19$Lyrics)
+
+
+
+
+adele_data_perSong1 <- album_19 %>%
+  select(Title, Lyrics) %>%
+  unnest_tokens(word, Lyrics)
+
+#removing stop words 
+adele_data_perSong_clean1 <- adele_data_perSong1 %>%
+  anti_join(stop_words)
+
+#bing lexicon application
+adele_sentiment_perSong1 <- adele_data_perSong_clean1 %>%  
+  inner_join(bing, by="word") %>%
+  group_by(Title) %>%
+    mutate(index = row_number() %/% 100) %>% 
+    count(index, sentiment) %>%
+      pivot_wider(names_from = sentiment, values_from = n, values_fill=0) %>%    
+        mutate(sentiment_score = positive - negative)
+
+adele_sentiment_perSong1
+
+ggplot(adele_sentiment_perSong1, aes(x = index, y = sentiment_score, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ Title, ncol = 2, scales = 'free_x') + 
+  labs(title = "Sentiment Plot for Bing Lexicon", x="Index per 100 words", y="Sentiment Score", fill = "Title")
+
+#aggregated charts using average sentiment score good for visualization purposes 
+#using avergae sentiment score because it graphs easier 
+adele_sentiment_perSong_overall <- adele_sentiment_perSong1 %>%
+  group_by(Title) %>%
+  summarise(overall_sentiment = mean(sentiment_score))
+
+ggplot(adele_sentiment_perSong_overall, aes(x = Title, y = overall_sentiment, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "19 By Adele", x = "Title", y = "Average Sentiment Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+```
+
+```{r}
+#plotting per album = 21
+
+album_21 <- adele_songs %>% filter(Album == 21)
+View(album_21)
+
+
+album_21$Album <- as.character(album_21$Album)
+album_21$Lyrics <- as.character(album_21$Lyrics)
+
+
+
+
+adele_data_perSong2 <- album_21 %>%
+  select(Title, Lyrics) %>%
+  unnest_tokens(word, Lyrics)
+
+#removing stop words 
+adele_data_perSong_clean2 <- adele_data_perSong2 %>%
+  anti_join(stop_words)
+
+#bing lexicon application
+adele_sentiment_perSong2 <- adele_data_perSong_clean2 %>%  
+  inner_join(bing, by="word") %>%
+  group_by(Title) %>%
+    mutate(index = row_number() %/% 100) %>% 
+    count(index, sentiment) %>%
+      pivot_wider(names_from = sentiment, values_from = n, values_fill=0) %>%    
+        mutate(sentiment_score = positive - negative)
+
+adele_sentiment_perSong2
+
+ggplot(adele_sentiment_perSong2, aes(x = index, y = sentiment_score, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ Title, ncol = 2, scales = 'free_x') + 
+  labs(title = "Sentiment Plot for Bing Lexicon", x="Index per 100 words", y="Sentiment Score", fill = "Title")
+
+adele_sentiment_perSong_overall <- adele_sentiment_perSong2 %>%
+  group_by(Title) %>%
+  summarise(overall_sentiment = mean(sentiment_score))
+
+ggplot(adele_sentiment_perSong_overall, aes(x = Title, y = overall_sentiment, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "21 by Adele", x = "Title", y = "Average Sentiment Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+```{r}
+#plotting per album = 25
+
+
+album_25 <- adele_songs %>% filter(Album == 25)
+View(album_25)
+
+
+album_25$Album <- as.character(album_25$Album)
+album_25$Lyrics <- as.character(album_25$Lyrics)
+
+
+adele_data_perSong3 <- album_25 %>%
+  select(Title, Lyrics) %>%
+  unnest_tokens(word, Lyrics)
+
+#removing stop words 
+adele_data_perSong_clean3 <- adele_data_perSong3 %>%
+  anti_join(stop_words)
+
+#bing lexicon application
+adele_sentiment_perSong3 <- adele_data_perSong_clean3 %>%  
+  inner_join(bing, by="word") %>%
+  group_by(Title) %>%
+    mutate(index = row_number() %/% 100) %>% 
+    count(index, sentiment) %>%
+      pivot_wider(names_from = sentiment, values_from = n, values_fill=0) %>%    
+        mutate(sentiment_score = positive - negative)
+
+adele_sentiment_perSong3
+
+ggplot(adele_sentiment_perSong3, aes(x = index, y = sentiment_score, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ Title, ncol = 2, scales = 'free_x') + 
+  labs(title = "Sentiment Plot for Bing Lexicon", x="Index per 100 words", y="Sentiment Score", fill = "Title")
+
+adele_sentiment_perSong_overall <- adele_sentiment_perSong3 %>%
+  group_by(Title) %>%
+  summarise(overall_sentiment = mean(sentiment_score))
+
+ggplot(adele_sentiment_perSong_overall, aes(x = Title, y = overall_sentiment, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "25 by Adele", x = "Title", y = "Average Sentiment Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+```{r}
+#plotting per album = 30
+
+album_30 <- adele_songs %>% filter(Album == 30)
+View(album_30)
+
+
+album_30$Album <- as.character(album_30$Album)
+album_30$Lyrics <- as.character(album_30$Lyrics)
+
+
+
+
+adele_data_perSong4 <- album_30 %>%
+  select(Title, Lyrics) %>%
+  unnest_tokens(word, Lyrics)
+
+#removing stop words 
+adele_data_perSong_clean4 <- adele_data_perSong4 %>%
+  anti_join(stop_words)
+
+#bing lexicon application
+adele_sentiment_perSong4 <- adele_data_perSong_clean4 %>%  
+  inner_join(bing, by="word") %>%
+  group_by(Title) %>%
+    mutate(index = row_number() %/% 100) %>% 
+    count(index, sentiment) %>%
+      pivot_wider(names_from = sentiment, values_from = n, values_fill=0) %>%    
+        mutate(sentiment_score = positive - negative)
+
+adele_sentiment_perSong4
+
+ggplot(adele_sentiment_perSong4, aes(x = index, y = sentiment_score, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ Title, ncol = 2, scales = 'free_x') + 
+  labs(title = "Sentiment Plot for Bing Lexicon", x="Index per 100 words", y="Sentiment Score", fill = "Title")
+
+adele_sentiment_perSong_overall <- adele_sentiment_perSong4 %>%
+  group_by(Title) %>%
+  summarise(overall_sentiment = mean(sentiment_score))
+
+ggplot(adele_sentiment_perSong_overall, aes(x = Title, y = overall_sentiment, fill = Title)) +
+  geom_col(show.legend = FALSE ) +
+  labs(title = "30 by Adele", x = "Title", y = "Average Sentiment Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+```{r}
+#plotting per album = single
+
+album_single <- adele_songs %>% filter(Album == 'Single')
+View(album_single)
+
+
+album_single$Album <- as.character(album_single$Album)
+album_single$Lyrics <- as.character(album_single$Lyrics)
+
+
+
+
+adele_data_perSong5 <- album_single %>%
+  select(Title, Lyrics) %>%
+  unnest_tokens(word, Lyrics)
+
+#removing stop words 
+adele_data_perSong_clean5 <- adele_data_perSong5 %>%
+  anti_join(stop_words)
+
+#bing lexicon application
+adele_sentiment_perSong5 <- adele_data_perSong_clean5 %>%  
+  inner_join(bing, by="word") %>%
+  group_by(Title) %>%
+    mutate(index = row_number() %/% 100) %>% 
+    count(index, sentiment) %>%
+      pivot_wider(names_from = sentiment, values_from = n, values_fill=0) %>%    
+        mutate(sentiment_score = positive - negative)
+
+adele_sentiment_perSong5
+
+
+ggplot(adele_sentiment_perSong5, aes(x = index, y = sentiment_score, fill = Title)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ Title, ncol = 2, scales = 'free_x') + 
+  labs(title = "Sentiment Plot for Bing Lexicon", x="Index per 100 words", y="Sentiment Score", fill = "Title")
+
+adele_sentiment_perSong_overall <- adele_sentiment_perSong5 %>%
+  group_by(Title) %>%
+  summarise(overall_sentiment = mean(sentiment_score))
+
+ggplot(adele_sentiment_perSong_overall, aes(x = Title, y = overall_sentiment, fill = Title)) +
+  geom_col(show.legend = FALSE ) +
+  labs(title = "Singles by Adele", x = "Title", y = "Average Sentiment Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+

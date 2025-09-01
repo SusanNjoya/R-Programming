@@ -15,7 +15,7 @@ library(ggplot2)
 
 ```{r}
 #Importing the data set 
-heart_Health <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/heart-2.csv")
+heart_Health <- read.csv("heart-2.csv")
 ```
 
 ```{r}

@@ -1,0 +1,97 @@
+---
+title: "Clustering Adele Songs"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+```{r}
+#libraries
+library(tm)
+library(cluster)
+```
+
+
+```{r}
+adele_songs <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv", header = TRUE)
+head(adele_songs)
+```
+
+```{r}
+#converting the lyrics part of the dataset to a corpus for further processing
+adele_songs1 <- Corpus(VectorSource(adele_songs$Lyrics))
+```
+
+```{r}
+#since there are 71 songs originally in the lyrics part of the dataset
+#in the corpus there should be 71 documents
+nSongs <- length(adele_songs1)
+nSongs
+
+minTermFreq <- nSongs * 0.01
+maxTermFreq <- nSongs * .5
+```
+
+```{r}
+#cleaning the text data and converting it to a DTM
+songs.dtm = DocumentTermMatrix(adele_songs1,
+                             control = list(
+                               stopwords = TRUE, 
+                               #limits the terms to words that have a min of 4 
+                               #letters and a max of 15 letters
+                               wordLengths=c(4, 15),
+                               removePunctuation = T,
+                               removeNumbers = T,
+                               bounds = list(global = c(minTermFreq, maxTermFreq))
+                             ))
+write.csv(as.matrix(songs.dtm),"songs_dtm.csv")
+songs_dtm <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/songs_dtm.csv", header = TRUE)
+View(songs_dtm)
+```
+
+```{r}
+#converting the dtm to a matrix
+song_matrix<-as.matrix(songs.dtm) 
+
+#creating a distance matrix 
+distMatrix <- dist(song_matrix, method="euclidean")
+
+#using Ward's hierachical clustering method hcluster() 
+groups <- hclust(distMatrix,method="ward.D") 
+
+#plotting the clusters using a Dendrogram
+plot(groups, 
+     cex=0.5, 
+     hang=-1,
+     main = "HCluster Dendrogram",
+     xlab = "Words represented as numeric vectors",
+     ylab = "Distance between words"
+     )
+
+rect.hclust(groups,k=5)
+
+```
+
+```{r}
+#K-means clustering 
+kfit<-kmeans(distMatrix, 5, nstart=50)
+kfit
+
+#seeing the word and its associated vectors
+kfit1<-kmeans(song_matrix, 5, nstart=50)
+kfit1
+
+clusplot(as.matrix(distMatrix), kfit$cluster, color=T, shade=T, labels=2, lines=0)
+
+kfit$size
+kfit$cluster
+
+write.csv(kfit$cluster, "final_cluster.csv")
+
+#shows the song and the cluster that it has been group into 
+#there are 5 clusters in total 
+final_cluster <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/final_cluster.csv", header = TRUE)
+View(final_cluster)
+
+```
+
+

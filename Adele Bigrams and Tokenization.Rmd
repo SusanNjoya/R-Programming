@@ -21,7 +21,7 @@ library(ggraph)
 
 ```{r}
 #Importing the dataset 
-adele_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv", stringsAsFactors = TRUE, header = TRUE)
+adele_data <- read.csv("adelesongs.csv", stringsAsFactors = TRUE, header = TRUE)
 
 head(adele_data)
 ```

@@ -1,5 +1,4 @@
 ---
-title: "Njoya Susan Assignment 4"
 output:
   pdf_document: default
   html_document: default
@@ -17,10 +16,7 @@ library(xgboost)
 #Importing the dataset 
 
 #loading on home computer
-adult_Survey <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/adult.csv", stringsAsFactors = TRUE)
-
-#processing in lab
-#adult_Survey <- read.csv( "C:/Users/snjoya2/Downloads/adult.csv", stringsAsFactors = TRUE)
+adult_Survey <- read.csv("adult.csv", stringsAsFactors = TRUE)
 
 summary(adult_Survey)
 str(adult_Survey)

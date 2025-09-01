@@ -1,5 +1,4 @@
 ---
-title: "Njoya Susan Classification Contest"
 output:
   pdf_document: default
   html_document: default
@@ -16,10 +15,10 @@ library(lattice)
 ```{r}
 #importing the dataset
 #training datset
-contest_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/plant_watering_data_for_model_creation.csv", stringsAsFactors = TRUE)
+contest_data <- read.csv("plant_watering_data_for_model_creation.csv", stringsAsFactors = TRUE)
 
 #testing "submission" dataset 
-contest_submission_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/plant_watering_data_for_submission.csv", stringsAsFactors = TRUE)
+contest_submission_data <- read.csv("plant_watering_data_for_submission.csv", stringsAsFactors = TRUE)
 
 
 head(contest_data)
@@ -155,7 +154,7 @@ contest_pred
 write.csv(contest_pred, "NjoyaSusanContest.csv")
 
 #importing the created file
-predicted_submission_set <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/NjoyaSusanContest.csv", stringsAsFactors = TRUE)
+predicted_submission_set <- read.csv("NjoyaSusanContest.csv", stringsAsFactors = TRUE)
 
 head(predicted_submission_set)
 #as the data set is unlabeled the columns are denoted with X and x

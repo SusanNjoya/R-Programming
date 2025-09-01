@@ -1,0 +1,171 @@
+---
+title: "Njoya Susan Classification Contest"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+#Libraries 
+library(readr)
+library(caret)
+library(ggplot2)
+library(lattice)
+```
+
+
+```{r}
+#importing the dataset
+#training datset
+contest_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/plant_watering_data_for_model_creation.csv", stringsAsFactors = TRUE)
+
+#testing "submission" dataset 
+contest_submission_data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/plant_watering_data_for_submission.csv", stringsAsFactors = TRUE)
+
+
+head(contest_data)
+summary(contest_data)
+str(contest_data)
+
+#removing the ID and plant id attributes
+contest_data <- contest_data[,c(-1,-2)]
+summary(contest_data)
+
+#converting needs_watering to a factor 
+contest_data$Needs_Watering <- as.factor(contest_data$Needs_Watering)
+
+```
+
+
+```{r}
+#no need to partition the dataset since the entire set will be used for training
+#also no need for creating an index variable 
+
+training_data <- contest_data
+
+#training with the "contest_data" lables as "training_data" 
+trControl <- trainControl(method = 'repeatedcv',
+                          number = 10,
+                          repeats =  5)
+
+logitFit <- train(Needs_Watering ~ ., data = training_data, 
+                  method = 'glm',
+                  trControl = trControl,
+                  family = 'binomial' )
+
+summary(logitFit)
+
+logitPredClass <- predict(logitFit,training_data)
+confusionMatrix(logitPredClass, training_data$Needs_Watering, mode="everything")
+```
+
+```{r}
+#Inital Training set notes 
+
+## Variables with the most significance in prediction:
+  #Soil_Mositure
+#Last_Watered_Hours_Ago   
+#Air_Temperature_C       
+#Humidity_Percent        
+#Plant_TypeBasil         
+#Plant_TypeFern           
+#Plant_TypeOrchid         
+#Pot_SizeMedium           
+#Pot_SizeSmall            
+#LocationOutdoor          
+
+##Variables with the least significant in prediction
+  #Sunlight_Exposure_Hours
+  #Plant_TypeCactus 
+  #LocationIndoor
+  #SeasonSpring          
+  #SeasonSummer
+  #SeasonWinter
+
+#Accuracy before removing non significant varibles 
+  #Accuracy : 0.9492          
+  #95% CI : (0.9421, 0.9556)
+  #F1: 0.9492  
+
+#Season doesn't seem to affect prediction accuracy for determining whether
+  #a plant needs to be watered
+#Also indoor plants might have varying watering patterns making it 
+  #hard to predict whether they need watering or not
+#Cactus plants generally need less watering so within the dataset there
+  #might not be variance in whether they need watering or not
+```
+
+```{r}
+#Training set without the insignificant varibles 
+training_data1  <- contest_data[,c(-3,-7,-12,-14,-15,-16)]
+
+#training with the "contest_data" lables as "training_data" 
+trControl1 <- trainControl(method = 'repeatedcv',
+                          number = 10,
+                          repeats =  5)
+
+logitFit1 <- train(Needs_Watering ~ ., data = training_data1, 
+                  method = 'glm',
+                  trControl = trControl,
+                  family = 'binomial' )
+
+summary(logitFit1)
+
+logitPredClass1 <- predict(logitFit1,training_data1)
+confusionMatrix(logitPredClass1, training_data1$Needs_Watering, mode="everything")
+
+#saving the model to use for the "submission" set
+saveRDS(logitFit, "contest_data_model.rds")
+
+```
+
+
+```{r}
+#Notes from refined dataset
+
+#There wasn't significant change in the accuracy, f1, and confidence interval 
+  #values, in fact the values decreased by about 0.0010 and 0.0020,
+  #meaning there was not significant chance in the model when insignificant 
+  #variables were removed. 
+
+#Accuracy values 
+  # Accuracy : 0.9482          
+  # 95% CI : (0.9411, 0.9547)
+  # F1 : 0.9483          
+
+```
+
+```{r}
+#Predicting the submission data set 
+
+#Using the original model instead of the refined model because the
+  #prediction value was more accurate
+
+modelFit <- readRDS("contest_data_model.rds")
+
+#converting the predicted model to a new vector
+contest_pred <- predict(modelFit, contest_submission_data)
+contest_pred
+
+```
+
+
+```{r}
+
+#writing the new vector to a csv for output
+write.csv(contest_pred, "NjoyaSusanContest.csv")
+
+#importing the created file
+predicted_submission_set <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/NjoyaSusanContest.csv", stringsAsFactors = TRUE)
+
+head(predicted_submission_set)
+#as the data set is unlabeled the columns are denoted with X and x
+# "X" being the ID category, while "x" is the predicted watering status
+predicted_submission_set$X <- as.factor(predicted_submission_set$X)
+predicted_submission_set$x <- as.factor(predicted_submission_set$x)
+summary(predicted_submission_set)
+
+#Of the submission data set 
+  # 0 = 369, meaning 369 of the flowers do not need watering 
+  # 1 = 381, meaning 381 of the flowers need to be watered 
+```
+

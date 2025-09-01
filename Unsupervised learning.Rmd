@@ -1,0 +1,129 @@
+---
+title: "Njoya Susan Assignment 5"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r}
+#Libraries 
+library(cluster)
+library(fpc)
+library(scales)
+library(ggplot2)
+```
+
+```{r}
+#Importing the data set 
+heart_Health <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/heart-2.csv")
+```
+
+```{r}
+#summary statistics and preprocessing 
+str(heart_Health)
+
+#removing na values
+heart_Health <- heart_Health[complete.cases(heart_Health),]
+
+
+summary(heart_Health)
+
+```
+
+
+
+
+```{r}
+
+#rescaling 
+heart_health_norm <- heart_Health
+heart_health_norm$age <- rescale(heart_Health$age, to = c(0,1))
+heart_health_norm$trestbps <- rescale(heart_Health$trestbps, to = c(0,1))
+heart_health_norm$chol <- rescale(heart_Health$chol, to = c(0,1))
+heart_health_norm$cp <- rescale(heart_Health$cp, to = c(0,1))
+heart_health_norm$thal <- rescale(heart_Health$thal, to = c(0,1))
+heart_health_norm$oldpeak <- rescale(heart_Health$oldpeak, to = c(0,1))
+heart_health_norm$restecg <- rescale(heart_Health$restecg, to = c(0,1))
+heart_health_norm$thalach <- rescale(heart_Health$thalach, to = c(0,1))
+heart_health_norm$slope <- rescale(heart_Health$slope, to = c(0,1))
+heart_health_norm$ca <- rescale(heart_Health$ca, to = c(0,1))
+
+
+
+distmatrix <- dist(heart_health_norm)
+
+
+```
+
+
+```{r}
+sse <- 0
+count <- 1
+
+for (k in 2:10){
+  km <- kmeans(heart_health_norm, centers=k)
+  sse[count] <- km$tot.withinss
+  count <- count+1
+}
+plot(c(2:10),sse)
+lines(c(2:10),sse)
+
+```
+
+```{r}
+avg_sil <- 0
+count <- 1 
+
+for (k in 2:10){
+  km <- kmeans(heart_health_norm, centers=k)
+  sil <- silhouette(km$cluster,distmatrix)
+  avg_sil[count] <- mean(sil[, 3])
+  count <- count+1
+}
+plot(c(2:10),avg_sil)
+lines(c(2:10),avg_sil)
+```
+
+
+```{r}
+#k-means with k = 3
+
+km3 <- kmeans(heart_health_norm, centers = 3) 
+
+pairs(heart_health_norm,col = km3$cluster)
+
+```
+
+```{r}
+# Silhouette plot
+sil3 <- silhouette(km3$cluster,distmatrix)
+avg_sil3 <- mean(sil3[,3])
+avg_sil3
+#added border = NA as the plot was originally not generating
+plot(sil3, border = NA)
+
+```
+
+```{r}
+cstatskm3 = cluster.stats(distmatrix,km3$cluster) 
+#evaluating the between and within cluster distances
+cstatskm3$average.between
+cstatskm3$average.within
+
+```
+
+
+```{r}
+#visualizations 
+#k=3
+target1 <- as.factor(heart_Health$target)
+ggplot(heart_Health, aes(x=km3$cluster, fill=target1)) +
+  geom_bar() +
+  labs(
+  x = "clusters",
+  y = "Count",
+  title = "Heart Disease 3 Clusters")
+  theme_minimal()
+  scale_fill_brewer(palette = "Set1")
+```
+

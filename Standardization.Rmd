@@ -1,0 +1,362 @@
+---
+title: 'CIS468 Group Project '
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+#libraries 
+library(ggplot2)
+library(ggcorrplot)
+library(readr)
+library(dplyr)
+library(stringr)
+library(tidyverse)
+```
+
+
+```{r}
+#Importing the dataset 
+
+#loading on home computer
+Life_Expectancy_Data <- read.csv("/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/Life_Expectancy_Data.csv", stringsAsFactors = TRUE)
+
+#processing in lab
+#adult_Survey <- read.csv( "C:/Users/snjoya2/Downloads/adult.csv", stringsAsFactors = TRUE)
+
+
+unique(Life_Expectancy_Data$Country)
+#data structure 
+str(Life_Expectancy_Data)
+
+Life_Expectancy_Data$Year <- as.factor(Life_Expectancy_Data$Year)
+summary(Life_Expectancy_Data)
+
+```
+```{r}
+#test/trial run without conversion to continents 
+ggplot(Life_Expectancy_Data, aes(x= Country, fill = Life.expectancy)) +
+      geom_bar(position = "dodge")+
+      labs(title = "Country and life expectancy",
+         x= "Country",
+         y= "Life Expectancy",
+         fill = "Life Expectancy Bin") +
+      theme_minimal()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#country and development 
+ggplot(Life_Expectancy_Data, aes(x= Country, fill = Status)) +
+      geom_bar(position = "dodge")+
+      labs(title = "Country and Status",
+         x= "Country",
+         y= "Status",
+         fill = "Status") +
+      theme_minimal()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+
+```{r}
+#combining the different countries into regions because there are 1563 unique
+#countries in this dataset 
+#organizing the countries by continent 
+
+LE_Data <- Life_Expectancy_Data
+
+  #continents: Africa, Asia, North America, Europe, South America, Oceania
+
+#Oceania
+
+#Creating a new category in the country column
+LE_Data$Country <- factor(LE_Data$Country, levels = c(levels(LE_Data$Country), "Oceania"))
+
+LE_Data$Country[LE_Data$Country == "Australia"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Fiji"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Kiribati"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Papua New Guinea"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Samoa"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Solomon Islands"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Tonga"] <- "Oceania"
+LE_Data$Country[LE_Data$Country == "Vanuatu"] <- "Oceania"
+
+#South America 
+
+
+LE_Data$Country <- factor(LE_Data$Country, levels = c(levels(LE_Data$Country), "South America"))
+
+LE_Data$Country[LE_Data$Country == "Argentina"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Brazil"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Chile"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Colombia"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Ecuador"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Guyana"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Paraguay"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Peru"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Suriname"] <- "South America"
+LE_Data$Country[LE_Data$Country == "Uruguay"] <- "South America"
+
+
+
+#North America 
+
+
+LE_Data$Country <- factor(LE_Data$Country, levels = c(levels(LE_Data$Country), "North America"))
+
+LE_Data$Country[LE_Data$Country == "Belize"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Canada"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Costa Rica"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Dominican Republic"] <- "North America"
+LE_Data$Country[LE_Data$Country == "El Salvador"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Guatemala"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Haiti"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Honduras"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Jamaica"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Mexico"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Nicaragua"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Panama"] <- "North America"
+LE_Data$Country[LE_Data$Country == "Trinidad and Tobago"] <- "North America"
+
+#Europe
+
+LE_Data$Country <- factor(LE_Data$Country, levels = c(levels(LE_Data$Country), "Europe"))
+
+LE_Data$Country[LE_Data$Country == "Albania"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Austria"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Belarus"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Belgium"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Bosnia and Herzegovina"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Bulgaria"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Croatia"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Cyprus"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Estonia"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "France"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Germany"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Greece"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Ireland"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Italy"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Latvia"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Lithuania"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Luxembourg"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Malta"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Montenegro"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Netherlands"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Poland"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Portugal"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Romania"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Russian Federation"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Serbia"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Spain"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Sweden"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Turkey"] <- "Europe"
+LE_Data$Country[LE_Data$Country == "Ukraine"] <- "Europe"
+
+
+#Asia 
+LE_Data$Country <- factor(LE_Data$Country, levels = c(levels(LE_Data$Country), "Asia"))
+
+LE_Data$Country[LE_Data$Country == "Afghanistan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Armenia"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Azerbaijan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Bangladesh"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Bhutan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Cambodia"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "China"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Georgia"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "India"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Indonesia"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Iraq"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Israel"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Jordan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Kazakhstan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Lebanon"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Malaysia"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Maldives"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Mongolia"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Myanmar"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Nepal"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Pakistan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Philippines"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Sri Lanka"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Syrian Arab Republic"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Tajikistan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Thailand"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Timor-Leste"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Turkmenistan"] <- "Asia"
+LE_Data$Country[LE_Data$Country == "Uzbekistan"] <- "Asia"
+
+#Africa
+
+LE_Data$Country <- factor(LE_Data$Country, levels = c(levels(LE_Data$Country), "Africa"))
+
+LE_Data$Country[LE_Data$Country == "Algeria"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Angola"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Benin"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Botswana"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Burkina Faso"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Burundi"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Cabo Verde"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Cameroon"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Central African Republic"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Chad"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Comoros"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Djibouti"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Equatorial Guinea"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Eritrea"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Ethiopia"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Gabon"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Ghana"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Guinea"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Guinea-Bissau"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Kenya"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Lesotho"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Liberia"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Madagascar"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Malawi"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Mali"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Mauritania"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Mauritius"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Morocco"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Mozambique"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Namibia"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Niger"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Nigeria"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Rwanda"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Sao Tome and Principe"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Senegal"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Seychelles"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Sierra Leone"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "South Africa"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Togo"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Tunisia"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Uganda"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Zambia"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Zimbabwe"] <- "Africa"
+LE_Data$Country[LE_Data$Country == "Swaziland"] <- "Africa"
+
+LE_Data$Country <- droplevels(LE_Data$Country)
+
+summary(LE_Data$Country)
+
+```
+
+```{r}
+#Removing Na values 
+LE_Data <- LE_Data[complete.cases(LE_Data),]
+
+
+#writing the cleaned data set into a new csv
+path <- "/Users/susannjoya/Documents/Spring 2025/CIS468 - Data Mining/LEData.csv"
+write.csv(LE_Data, path, row.names = FALSE)
+View(LE_Data)
+
+```
+
+```{r}
+ggplot(LE_Data, aes(x = Country)) +
+  geom_bar(fill = "blue") +
+  labs(title = "Number of Countries per Continent",
+       x = "Continents",
+       y = "Count") 
+summary(LE_Data)
+```
+
+```{r}
+#Binning : Life Expectancy
+summary(LE_Data$Life.expectancy)
+
+LE_Data$Life.expectancy_bin<- as.factor(cut(LE_Data$Life.expectancy,3, labels=FALSE))
+
+bin_ranges <- seq(min(LE_Data$Life.expectancy), 
+                 max(LE_Data$Life.expectancy), 
+                 length.out = 6)  
+bin_ranges
+  
+  #Bin 1 : Low
+  #Bin 2 : Average
+  #Bin 3 : High
+  
+#Visualize the resulting categorical variable with a bar plot
+
+#renaming the bins 
+levels(LE_Data$Life.expectancy_bin) <- c("Low", "Average", "High")
+
+ggplot(LE_Data, aes(x=Life.expectancy_bin)) + 
+  geom_bar() +
+    labs(title = "Life Expectancy Bins", x = "Bins", y = "Count")
+
+table(LE_Data$Life.expectancy_bin)
+```
+```{r}
+#correlation matrix
+LE_Data$Year <- as.integer(LE_Data$Year)
+health_cor <- cor(LE_Data[c(2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22)])
+##extracting numeric variables from the dataset to find their correlation
+
+ggcorrplot(health_cor, method = "square",
+           lab = TRUE, lab_size = 3, 
+           colors = c("blue", "white", "red"),
+           title = "Correlogram of Continent Health Data",
+           ggtheme = theme_minimal())
+
+#Schooling and life expectancy 0.73 
+x <- LE_Data$Schooling
+y <- LE_Data$Life.expectancy
+plot(x, y, 
+     main="Correlation between Schooling and Life Expectancy", 
+     xlab="Schooling",
+     ylab="Life Expectancy"
+     )
+
+#Income Composition of Resources and Life Expectancy 0.72
+y <- LE_Data$Income.composition.of.resources
+x <- LE_Data$Life.expectancy
+plot(x, y, 
+     main="Correlation between Income Composition of Resources and Life Expectancy", 
+     xlab="Life Expectancy",
+     ylab="Income Composition of Resources"
+     )
+
+#Adult Mortality and Life Expectancy 0.7
+x <- LE_Data$Adult.Mortality
+y <- LE_Data$Life.expectancy
+plot(x, y, 
+     main="Correlation between Adult Mortality and Life Expectancy", 
+     xlab="Adult Mortality",
+     ylab="Life Expectancy"
+     )
+
+#Income composition of resources anf schooling 0.78
+y <- LE_Data$Income.composition.of.resources
+x <- LE_Data$Schooling
+plot(x, y, 
+     main="Correlation between Income Composition of Resources and Schooling", 
+     xlab="School",
+     ylab="Income Composition of Resources"
+     )
+```
+
+```{r}
+#bar chart 
+
+#continent, life expectancy bin, and status 
+
+ggplot(LE_Data, aes(x= Country, fill = Life.expectancy_bin)) +
+      geom_bar(position = "dodge")+
+      labs(title = "Continent and life expectancy",
+         x= "Continent",
+         y= "Count of Country Entries",
+         fill = "Life Expectancy Bin") +
+      theme_minimal()
+
+ggplot(LE_Data, aes(x= Country, fill = Status)) +
+      geom_bar(position = "dodge")+
+      labs(title = "Continent and Status",
+         x= "Continent",
+         y= "Count of Country Entries",
+         fill = "Status") +
+      theme_minimal()
+```
+
+

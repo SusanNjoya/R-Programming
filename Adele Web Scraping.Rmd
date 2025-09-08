@@ -1,0 +1,94 @@
+---
+title: "Adele Web Scraping"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+#installing and loading packages 
+
+library(dplyr)
+library(stringr)
+library(httr)
+library(rvest)
+library(magrittr)
+```
+
+```{r}
+#using a user agent to avoid being blocked from the site while scrapping 
+apple_user_agent <- "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Version/15.6 Safari/537.36"
+
+#assigning the website to a vector 
+
+adele_url <- "https://www.azlyrics.com/a/adele.html"
+
+adele_html <- read_html(adele_url)
+```
+
+```{r}
+#using the user agent to read the webpage. 
+adele_html <- read_html(GET(adele_url, user_agent(apple_user_agent)))
+
+#checking the links on the page
+site_links <- adele_html %>%
+  html_nodes("a") %>%
+  html_attr("href")
+site_links
+
+#filtering only for the links titles including adele 
+
+adele_list <- site_links[grepl("^/lyrics/adele/", site_links)]
+
+#combining the two links to make one full link
+adele_list <- paste0("https://www.azlyrics.com", adele_list)
+
+
+adele_list
+
+link_size <- 16 
+#since each album has around 16 songs and the program tends to exit after 
+#parsing through 19 songs I decided to limit the links scraped to 16 so it can
+#scrape the links based on the album. 
+adele_list <- adele_list[1:min(link_size, length(adele_list))]
+#counting the total amount of links is the adele list which contains all the 
+#links collected then splitting that lost by the link size 16. 
+
+#loop to go through all the links in the list then pull the song lyrics
+scrape_songs <- function(song_url) {
+ Sys.sleep(5)  # suspends executions of the program for 5 seconds
+  ##We were hoping that by using the sys.sleep(5) function the site
+  ##would no longer time out and exit. This way the we could create the dataset 
+  #at once without splitting it. This however was not helpful in limiting time 
+  #outs. But when we tried to #process the program without the sys.sleep 
+  #the program doesn't scrape up to 16 #songs.
+   
+  song_html <- read_html(GET(song_url, user_agent(apple_user_agent)))
+   
+  data.frame(
+  #using the CSS selectors/operators to extract link information
+   #extracting the title of each web page 
+  title <- song_html %>% html_node("title") %>% html_text() %>% str_replace(" Lyrics \\| AZLyrics.com", ""),
+
+  #extracting the lyrics
+  lyrics <- song_html %>% html_nodes("div:not([class])") %>% html_text(trim = TRUE) %>% paste(collapse = "\n"), 
+  
+    #extracting the writers/authors
+  writers <- song_html %>% html_node("div.songwriters") %>% html_text(trim = TRUE),
+  url = song_url
+  )
+}
+
+adele_songs <- bind_rows(lapply(adele_list, scrape_songs))
+  #adding the results to the empty dataframe 
+
+
+View(adele_songs)
+
+getwd()
+path <- "/Users/susannjoya/Documents/Spring 2025/CIS428 - Text Analytics/adelesongs.csv"
+write.csv(adele_songs, path, row.names = FALSE)
+```
+
+
+
